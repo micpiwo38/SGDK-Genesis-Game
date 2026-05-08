@@ -1,3 +1,7 @@
+### SGDK est un DebKit pour SEGA GENESIS créer par un français (Stephane-D) pour coder des jeux megadrive avec le langage C (et non en ASM)
+
+### https://www.youtube.com/watch?v=VzTPW3MpKgQ&t=1s
+
 ### A chaque modification de son ou de sprite -> clean = Ctrl + Shift + C
 
 ### Compilation -> Ctrl + Shift + B

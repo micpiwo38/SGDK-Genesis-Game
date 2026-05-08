@@ -14,11 +14,15 @@ Sprite *coin;
 
 // Deplacement Player
 int player_x = 120;
-int player_y = 146;
+fix16 player_y = FIX16(146); // Float fix en C = non a virgule constant = economie de resource + precis qu'un int
 int player_speed = 3;
 int player_direction = 0;
-
+int prev_player_direction = 0; // Pour eviter de redemarrer l'animation
 // Saut du player
+fix16 player_y_velocity = FIX16(0); // Par defaut la velocité en Y est un float fix de 0
+const int floor_height = 146;
+fix16 player_gravity = FIX16(0.5); // vitesse de chute apres le saut = gravité
+bool player_jump = FALSE;
 
 // Player anlimation => 5
 #define Animation_Player_IDLE 0
@@ -55,6 +59,18 @@ void manette(u16 joy, u16 changed, u16 state)
 		{
 			player_direction = 0;
 		}
+		// Le saut
+		if (state & BUTTON_A || state & BUTTON_B || state & BUTTON_C)
+		{
+			if (player_jump == FALSE)
+			{
+				// Changer l'etat = la condition evite le saut infinis
+				player_jump = TRUE;
+				player_y_velocity = FIX16(-6);
+				// Animation de saut au debut
+				SPR_setAnim(player, Animation_Player_JUMP);
+			}
+		}
 
 		// Bouton start lance le jeu
 		if (state & BUTTON_START)
@@ -71,20 +87,26 @@ void move_player()
 	if (player_direction == 1 && player_x >= 16) // bloc 16 a gauche = 0 + 16
 	{
 		player_x -= player_speed;
-		// Trigger animation left
-		SPR_setAnim(player, Animation_Player_LEFT);
 	}
 	else if (player_direction == 2 && player_x <= 288) // 320 - 16
 	{
 		player_x += player_speed;
-		SPR_setAnim(player, Animation_Player_RIGHT);
 	}
-	else
+
+	// Changer animation seulement si direction change et pas en saut
+	if (player_direction != prev_player_direction && player_jump == FALSE)
 	{
-		SPR_setAnim(player, Animation_Player_IDLE);
+		if (player_direction == 1)
+			SPR_setAnim(player, Animation_Player_LEFT);
+		else if (player_direction == 2)
+			SPR_setAnim(player, Animation_Player_RIGHT);
+		else
+			SPR_setAnim(player, Animation_Player_IDLE);
+		prev_player_direction = player_direction;
 	}
-	// MAJ Sprite Player
-	SPR_setPosition(player, player_x, player_y);
+
+	// MAJ Sprite Player = parser le float a  int en Y
+	SPR_setPosition(player, player_x, F16_toInt(player_y));
 }
 
 //------------------------------------------BOUCLE DE GAMEPLAY---------------------------------------//
@@ -134,6 +156,21 @@ int main()
 		{
 			SPR_setVisibility(player, VISIBLE);
 			move_player();
+			// Le saut
+			if (player_jump == TRUE)
+			{
+				player_y += player_y_velocity;
+				player_y_velocity += player_gravity;
+			}
+			// Apres un saut si le player touche le sol
+			if (player_jump == TRUE && F16_toInt(player_y) >= floor_height)
+			{
+				player_jump = FALSE;
+				// Reset de la velocité
+				player_y_velocity = FIX16(0);
+				// Remettre animation idle
+				SPR_setAnim(player, Animation_Player_IDLE);
+			}
 		}
 
 		VDP_waitVSync();
