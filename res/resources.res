@@ -1,5 +1,5 @@
 
-SPRITE player_sprite "sprites/Player.png" 2 2 NONE 10
+SPRITE player_sprite "sprites/Player.png" 2 2 NONE 2
 SPRITE bloc_sprite "sprites/Bloc_1.png" 2 2 NONE 0
 SPRITE coin_sprite "sprites/Coin.png" 2 2 NONE 0
 

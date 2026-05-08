@@ -1,16 +1,24 @@
 #include <genesis.h>
 #include <resources.h>
+#include <string.h>
+
+// Le menu
+bool game_start = FALSE;
+char version[22] = "MIC GAME V1.0.0";
+char start_message[22] = "--- PRESS START ---";
 
 // Import des sprites = ref pointeur vers le fichier resources
 Sprite *player;
 Sprite *bloc;
 Sprite *coin;
 
-// Deplacement
+// Deplacement Player
 int player_x = 120;
 int player_y = 146;
 int player_speed = 3;
 int player_direction = 0;
+
+// Saut du player
 
 // Player anlimation => 5
 #define Animation_Player_IDLE 0
@@ -19,6 +27,16 @@ int player_direction = 0;
 #define Animation_Player_JUMP 3
 #define Animation_Player_DIE 4
 
+//------------------------------------------------------FUNCTIONS---------------------------------------//
+
+// Menu = game_start = FALSE
+void delete_start_message()
+{
+	// Position X et Y du texte + nombre de char[]
+	VDP_clearText(12, 25, 22); // Texte de la version
+	VDP_clearText(10, 27, 22); // Test PRESS START
+}
+//-----------------------------------------------------------CONTROLLERS-----------------------------------//
 // Les controles
 void manette(u16 joy, u16 changed, u16 state)
 {
@@ -37,22 +55,33 @@ void manette(u16 joy, u16 changed, u16 state)
 		{
 			player_direction = 0;
 		}
+
+		// Bouton start lance le jeu
+		if (state & BUTTON_START)
+		{
+			game_start = TRUE;
+			delete_start_message();
+		}
 	}
 }
-
+//-----------------------------------------------PLAYER-------------------------------------//
 // Deplacer player sprite
 void move_player()
 {
 	if (player_direction == 1 && player_x >= 16) // bloc 16 a gauche = 0 + 16
 	{
 		player_x -= player_speed;
+		// Trigger animation left
+		SPR_setAnim(player, Animation_Player_LEFT);
 	}
 	else if (player_direction == 2 && player_x <= 288) // 320 - 16
 	{
 		player_x += player_speed;
+		SPR_setAnim(player, Animation_Player_RIGHT);
 	}
 	else
 	{
+		SPR_setAnim(player, Animation_Player_IDLE);
 	}
 	// MAJ Sprite Player
 	SPR_setPosition(player, player_x, player_y);
@@ -78,6 +107,7 @@ int main()
 
 	// Le player sprite est un pointeur (adresse memeoire) -> SPR_addSprite a besoin de la reference de l'adresse memoire pour lier le fichier png de resources.res au fichier c
 	//  Charger les sprites (adresse memoire du sprite, x, y, attribut de la tuile(la palette,?,?,?))
+
 	player = SPR_addSprite(&player_sprite, player_x, player_y, TILE_ATTR(PAL0, 0, 0, 0));
 	bloc = SPR_addSprite(&bloc_sprite, 30, 50, TILE_ATTR(PAL1, 0, 0, 0));
 	coin = SPR_addSprite(&coin_sprite, 100, 100, TILE_ATTR(PAL2, 0, 0, 0));
@@ -88,12 +118,24 @@ int main()
 	PAL_setPalette(PAL2, coin_sprite.palette->data, CPU);
 	PAL_setPalette(PAL3, level_one_sprite.palette->data, CPU);
 
-	VDP_drawText("SUper jeu de Mic!", 10, 13);
+	VDP_drawText(version, 12, 25);
+	VDP_drawText(start_message, 10, 27);
 
 	while (1)
 	{
+		// MAJ des sprites
 		SPR_update();
-		move_player();
+		// SI menu ou jeu
+		if (game_start == FALSE)
+		{
+			SPR_setVisibility(player, HIDDEN);
+		}
+		else
+		{
+			SPR_setVisibility(player, VISIBLE);
+			move_player();
+		}
+
 		VDP_waitVSync();
 
 		SYS_doVBlankProcess();
